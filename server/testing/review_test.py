@@ -1,7 +1,6 @@
 from app import app, db
 from server.models import Customer, Item, Review
 
-
 class TestReview:
     '''Review model in models.py'''
 
@@ -20,9 +19,16 @@ class TestReview:
         '''can be added to a transaction and committed to review table with comment column.'''
         with app.app_context():
             assert 'comment' in Review.__table__.columns
-            r = Review(comment='great!')
+            # Creating a Customer and Item, which are required due to the foreign key constraints
+            c = Customer(name="John Doe")
+            i = Item(name="Laptop", price=999.99)
+            db.session.add_all([c, i])
+            db.session.commit()
+
+            r = Review(comment='great!', customer=c, item=i)
             db.session.add(r)
             db.session.commit()
+
             assert hasattr(r, 'id')
             assert db.session.query(Review).filter_by(id=r.id).first()
 
@@ -32,8 +38,8 @@ class TestReview:
             assert 'customer_id' in Review.__table__.columns
             assert 'item_id' in Review.__table__.columns
 
-            c = Customer()
-            i = Item()
+            c = Customer(name="Alice")
+            i = Item(name="Smartphone", price=699.99)
             db.session.add_all([c, i])
             db.session.commit()
 

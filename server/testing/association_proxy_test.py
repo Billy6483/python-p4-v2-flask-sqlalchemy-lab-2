@@ -1,15 +1,24 @@
+import pytest
 from app import app, db
 from server.models import Customer, Item, Review
 
+@pytest.fixture(scope='function', autouse=True)
+def clean_database():
+    '''Ensure the database is clean before each test.'''
+    with app.app_context():
+        db.drop_all()  # Drop all tables
+        db.create_all()  # Recreate all tables
+        yield
+        db.session.remove()  # Ensure session is cleaned up after each test
 
 class TestAssociationProxy:
-    '''Customer in models.py'''
+    '''Test association proxy for Customer model.'''
 
     def test_has_association_proxy(self):
-        '''has association proxy to items'''
+        '''Ensure that Customer has association proxy to items.'''
         with app.app_context():
-            c = Customer()
-            i = Item()
+            c = Customer(name='Phil')
+            i = Item(name='Insulated Mug', price=9.99)
             db.session.add_all([c, i])
             db.session.commit()
 
@@ -18,4 +27,5 @@ class TestAssociationProxy:
             db.session.commit()
 
             assert hasattr(c, 'items')
-            assert i in c.items
+            assert i in c.items  # Check if the item is accessible through association proxy
+
